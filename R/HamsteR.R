@@ -1,3 +1,12 @@
+#
+# hamsteR
+# Simple Module Management for R
+#
+
+
+.env = new.env(parent = emptyenv())
+
+LoadingStates = factor(levels = c("undefined", "loading", "loaded"))
 
 
 #' @title FUNCTION_TITLE
@@ -17,30 +26,57 @@
 
 .onLoad <- function(libname, pkgname){
 
-  # Create Modules if not already has been created
-  if (!is.environment("ModuleREnv")){
-      ModuleREnv <- new.env()
-  }
-  if (!exists("Modules", envir = ModuleREnv)) {
-    assign("Modules", data.frame(LoadingState=character()
-                         ),
-           envir = ModuleREnv)
+  # DEBUG
+  # message("hamsteR.onLoad: loading...")
+
+  # create basic data structure
+  if ( ! exists("Modules", envir = .env) ){
+    .env$Modules <- data.frame(LoadingState=character(), stringsAsFactors = FALSE)
+    cat("\U2713 data structure prepared.\n")
   }
 
   op <- options()
-  op.ModuleR <- list(
-    ModuleR.path = "~/R-dev",
-    ModuleR.install.args = "",
-    ModuleR.name = "ModuleR",
-    ModuleR.desc.author = "Marc O. Ruedel <mor@uni-bremen.de> [aut]",
-    ModuleR.desc.license = "What license is it under?",
-    ModuleR.debug=FALSE
+  op.hamsteR <- list(
+    hamsteR.path = "~/R-dev",
+    hamsteR.install.args = "",
+    hamsteR.name = "hamsteR",
+    hamsteR.desc.author = "Marc O. Rüdel <mor@uni-bremen.de> [aut, cre]",
+    hamsteR.desc.license = "What license is it under?",
+    hamsteR.debug = FALSE
   )
-  toset <- !(names(op.ModuleR) %in% names(op))
-  if(any(toset)) options(op.ModuleR[toset])
+  toset <- !(names(op.hamsteR) %in% names(op))
+  if(any(toset)) options(op.hamsteR[toset])
+
+  # DEBUG
+  # message("hamsteR.onLoad: finished")
 
   invisible()
+
 }
+
+
+
+
+#' @title FUNCTION_TITLE
+#' @description FUNCTION_DESCRIPTION
+#' @param libname PARAM_DESCRIPTION
+#' @param pkgname PARAM_DESCRIPTION
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @export
+#' @rdname .onAttach
+
+.onAttach <- function(libname, pkgname){
+  message("hamsteR attached.")
+}
+
+
 
 
 
@@ -63,15 +99,19 @@
 
   err <- NULL
 
-  module_name = tools::file_path_sans_ext(module_file)
-  file_name.extension = tools::file_ext(module_file)
-	
+  module_name <- tools::file_path_sans_ext(module_file)
+  file_name.extension <- tools::file_ext(module_file)
+
   if (file_name.extension != "R") {
     module_name <- ""
-    err <- paste0("file '", module_file,"' has no '*.R' extension")
+    err <- paste0("ERROR: file '", module_file,"' has no '*.R' extension")
   } # ext ?= "R"
 
-  return(list("name"= module_name, "err" = err))
+  res = c(name = module_name,
+          err  = err
+          )
+  if (getOption("hamsteR.debug")) {print(res)}
+  return(res)
 
 }
 
@@ -92,50 +132,68 @@
 #' @export
 #' @rdname Load
 
-Load <- function(module_file, OnlyIfNotAlreadyLoaded=TRUE) {
+Load <- function(module_file, force_load=FALSE) {
 
-  module_name_result <- Modules..get_module_name(module_file)
+  # ----- Check Params -----------------------------------------------
 
-  if (is.null(module_name_result[["err"]])) {
-    # no error in module file name
+  check = .check_module_file(module_file)
+  if (check != "ok") {
+    return(check)
+  }
 
-    # grab module name (module file name w/o extension)
-    module_name = module_name_result[["name"]]
+  if ( is.na(force_load) |
+       ! is.logical(force_load) |
+       length(force_load) != 1 ) {
+    return ("ERROR: force_load parameter has to be just TRUE or FALSE.")
+  }
 
-    # check if the module is already marked 'loaded'
-    if (Modules.is_notloaded(module_file) || # if dataset not marked as loaded
-        !OnlyIfNotAlreadyLoaded){   # OR load anyway
 
-      if (file.exists(module_file)) {
+  # ----- check Modules ----------------------------------------------
 
-        .createIfNotFound(module_name, "LoadingState")
-        if (getOption("ModuleR.debug")) {message(paste0("ModuleR: loading '", module_file, "' ..."))} # DEBUG
+  if (! exists("Modules", envir = .env)) {
+    return("ERROR: unable to access internal data structure")
+  } # exists .env$Module
 
-        source(module_file)
-        return("loaded")
+  # ----- check module name ------------------------------------------
 
-      } else {
+  module_name_result <- .get_module_name(module_file)
 
-        warning(paste0("file '", module_file,"' not found"))
-        return(paste0("file '", module_file,"' not found"))
-
-      } # file.exists
-
-    } else {
-
-      if (getOptions("ModuleR.debug")) {message(paste0("ModuleR: '", module_file, "' already marked as loaded, skipping"))} # DEBUG
-      return("already marked as loaded")
-
-    } # isTRUE
-
-  } else {
-
+  if ("err" %in% names(module_name_result)) {
+    #  error in module file name
     warning(paste0("file '", module_file,"' has no '*.R' extension"))
-    return(module_name_result[["err"]])
+    return(module_name_result["err"])
+  } # .get_module_name)
 
-  } # Modules..get_module_name)
+  # grab module name (module file name w/o extension)
+  module_name = module_name_result["name"]
 
-  rm(temp)
+  # ----- check already loaded ---------------------------------------
+
+  # check if the module is already marked 'loaded'
+  if ( ! is_notloaded(module_file) & # if dataset marked as loaded
+      !force_load){   # OR force load / load anyway
+
+    if (getOptions("hamsteR.debug")) {message(paste0("hamsteR: '", module_file, "' already marked as loaded, skipping"))} # DEBUG
+    return("already marked as loaded")
+
+  } # ! notloaded & ! force_load
+
+  # ----- module file exists? ----------------------------------------
+
+  if (! file.exists(module_file)) {
+
+    warning(paste0("file '", module_file,"' not found"))
+    return(paste0("file '", module_file,"' not found"))
+
+  } # file.exists
+
+  # ----- Main -------------------------------------------------------
+
+  .createIfNotFound(module_name, "LoadingState")
+  if (getOption("hamsteR.debug")) {message(paste0("hamsteR: loading '", module_file, "' ..."))} # DEBUG
+
+  require(module_file)
+  return("loaded")
 
 }
 
@@ -159,14 +217,35 @@ Load <- function(module_file, OnlyIfNotAlreadyLoaded=TRUE) {
 #' @export
 #' @rdname .createIfNotFound
 
-.createIfNotFound <- function(module_name, column_name, state="not loaded") {
+.createIfNotFound <- function(module_name, column, state="undefined") {
 
-  if (!contains(module_name)) { # if no such dataset
-    Modules[nrow(Modules)+1, column_name] <<- state #assign!!!
-    rownames(Modules)[nrow(Modules)] <<- module_name #assign!!!
-    return("created")
+  # ----- Check Params -----------------------------------------------
+
+  if ( ! column %in% colnames(.env$Modules) ) {
+    return("ERROR: parameter 'column' is not a valid column of the 'Modules' data frame.")
   }
-  return("found")
+
+  if ( ! state %in% levels(hamsteR::LoadingStates)) {
+    return("ERROR: '", state, "' is not a valid level of 'LoadingStates'.")
+  } # ! state in LoadingStates
+
+  # ----- check Modules ----------------------------------------------
+
+  if ( ! exists("Modules", envir = .env) ) {
+    return("ERROR: unable to access internal data structure")
+  } # exists .env$Module
+
+  # ----- module name exists? ----------------------------------------
+
+  if (.contains(module_name)) { # if such dataset
+    return("found")
+  }
+
+  # ----- Main -------------------------------------------------------
+
+  .env$Modules[nrow(.env$Modules) + 1, column] <- state
+  rownames(.env$Modules)[nrow(.env$Modules)] <- module_name
+  return("created")
 
 } # .createIfNotFound
 
@@ -185,88 +264,61 @@ Load <- function(module_file, OnlyIfNotAlreadyLoaded=TRUE) {
 #'  }
 #' }
 #' @export
-#' @rdname .set
+#' @rdname set_loading_state
 
-.set <- function(module_file, state) {
+set_loading_state <- function(module_file, state) {
 
-  module_name_result <- Modules..get_module_name(module_file)
+  # ----- Check Params -----------------------------------------------
 
-  if (is.null(module_name_result[["err"]])){
+  if ( ! exists("Modules", envir = .env)) {
+    return("ERROR: unable to access internal data structure")
+  } # ! exists .env$Module
+
+  if ( ! state %in% levels(hamsteR::LoadingStates)) {
+    return("ERROR: '", state, "' is not a valid level of 'LoadingStates'.")
+  } # ! state in LoadingStates
+
+  check = .check_module_file(module_file)
+  if (check != "ok") {
+    return(check)
+  }
+
+  # ----- check Modules ----------------------------------------------
+
+  if (! exists("Modules", envir = .env)) {
+    return("ERROR: unable to access internal data structure")
+  } # exists .env$Module
+
+  # ----- Main -------------------------------------------------------
+
+  module_name_result <- .get_module_name(module_file)
+  #print(module_name_result)
+  #cat("\nname err? ", !is.null(module_name_result[["err"]]), "\n", "  Err:  ", module_name_result[["err"]], "\n")
+
+  if ( ! "err" %in% names(module_name_result)){
+    # no error while gathering module name from module file name
 
     module_name <- module_name_result[["name"]]
+    #print(module_name)
     .createIfNotFound(module_name, "LoadingState")
-    Modules$LoadingState[rownames(Modules) == module_name] <<- state # assign!
-    if (getOption("Modules.debug")) {message(paste0("ModuleR: '", module_file,"' marked as ", state, "."))}
-    return(Modules)
+    #print(status())
+    #print(state)
+    .env$Modules[rownames(.env$Modules) == module_name, "LoadingState"] <- match(state, levels(LoadingStates))
+
+    return(paste0("'", module_file,"' now marked as '", state, "'."))
 
   } else {
 
-    return(module_name[["err"]])
+    # warning(module_name_result[["err"]])
+    return(module_name_result[["err"]])
 
   } # !is.na
+
 
 } # function
 
 
 
-
-#' @title FUNCTION_TITLE
-#' @description FUNCTION_DESCRIPTION
-#' @param module_file PARAM_DESCRIPTION
-#' @return OUTPUT_DESCRIPTION
-#' @details DETAILS
-#' @examples
-#' \dontrun{
-#' if(interactive()){
-#'  #EXAMPLE1
-#'  }
-#' }
-#' @export
-#' @rdname set_notloaded
-
-set_notloaded <- function(module_file) {
-  return(.set(module_file, state="not loaded"))
-}
-
-
-
-#' @title FUNCTION_TITLE
-#' @description FUNCTION_DESCRIPTION
-#' @param module_file PARAM_DESCRIPTION
-#' @return OUTPUT_DESCRIPTION
-#' @details DETAILS
-#' @examples
-#' \dontrun{
-#' if(interactive()){
-#'  #EXAMPLE1
-#'  }
-#' }
-#' @export
-#' @rdname set_loaded
-
-set_loaded <- function(module_file) {
-  return(.set(module_file, state="loaded"))
-}
-
-
-
-#' @title FUNCTION_TITLE
-#' @description FUNCTION_DESCRIPTION
-#' @param module_file PARAM_DESCRIPTION
-#' @return OUTPUT_DESCRIPTION
-#' @details DETAILS
-#' @examples
-#' \dontrun{
-#' if(interactive()){
-#'  #EXAMPLE1
-#'  }
-#' }
-#' @export
-#' @rdname set_loading
-
-set_loading <- function(module_file) {
-  return(.set(module_file, state="loading"))
-}
 
 
 #' @title FUNCTION_TITLE
@@ -284,9 +336,138 @@ set_loading <- function(module_file) {
 #' @rdname set_all_unloaded
 
 set_all_unloaded <- function() {
-  Modules$LoadingState <<- "not loaded" # ass
 
+  if (exists("Modules", envir = .env)) {
+
+    .env$Modules$LoadingState <- "not loaded" # ass
+    return("ok")
+
+  } else {
+    return("ERROR: unable to access internal data structure")
+  } # exists .env$Module
 }
+
+
+
+
+
+#' @title Clears all module states
+#' @description Clears all module states so that all modules are reloaded the next time they are used
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @export
+#' @rdname reset
+
+reset <- function() {
+
+  # ----- check Modules ----------------------------------------------
+
+  if (! exists("Modules", envir = .env)) {
+    return("ERROR: unable to access internal data structure")
+  } # exists .env$Module
+
+  # ----- Main -------------------------------------------------------
+
+  .env$Modules <- head(.env$Modules,0)
+  return("ok")
+
+} # reset
+
+
+.check_module_file <- function(module_file){
+
+  if ( ! is.vector(module_file) ) {
+    return("ERROR: first parameter is not a vector.")
+  } # ! state in LoadingStates
+
+  if ( length(module_file) != 1 ) {
+    return("ERROR: length of first parameter is not 1.")
+  } # ! state in LoadingStates
+
+  if ( ! is.character(module_file) ) {
+    return("ERROR: first parameter is a character vector.")
+  } # ! state in LoadingStates
+
+  return("ok")
+}
+
+#' @title FUNCTION_TITLE
+#' @description FUNCTION_DESCRIPTION
+
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @export
+#' @rdname check_loading_state
+
+check_loading_state <- function(module_file, check_state) {
+
+  # ----- Check Params -----------------------------------------------
+
+  if ( ! exists("Modules", envir = .env)) {
+    return("ERROR: unable to access internal data structure")
+  } # ! exists .env$Module
+
+  if ( ! check_state %in% levels(hamsteR::LoadingStates)) {
+    return("ERROR: state parameter is not a valid level of 'LoadingStates'.")
+  } # ! state in LoadingStates
+
+  check = .check_module_file(module_file)
+  if (check != "ok") {
+    return(check)
+  }
+
+  # ----- check Modules ----------------------------------------------
+
+  if (! exists("Modules", envir = .env)) {
+    return("ERROR: unable to access internal data structure")
+  } # exists .env$Module
+
+  # ----- handle file name error -------------------------------------
+
+  module_name_result <- .get_module_name(module_file)
+
+  if ("err" %in% names(module_name_result)){
+    # handle file name error
+    return(module_name_result[["err"]])
+  }
+
+  # ----- Main -------------------------------------------------------
+
+  module_name = module_name_result[["name"]]
+  #print(module_name)
+  .createIfNotFound(module_name, "LoadingState")
+
+  #print(rownames(.env$Modules))
+  #print(.env$Modules[rownames(.env$Modules) == module_name, "LoadingState"])
+  #print(.env$Modules[rownames(.env$Modules) == module_name, "LoadingState"])
+  # print(.env$Modules[rownames(.env$Modules) == module_name, "LoadingState"])
+  # print(check_state)
+  # print(match(check_state, levels(LoadingStates)))
+  return(
+    isTRUE(
+      .env$Modules[rownames(.env$Modules) == module_name, "LoadingState"] == match(check_state, levels(LoadingStates))
+      )
+    )
+
+} # is_x
+
+
+
+
+
+
 
 
 #' @title FUNCTION_TITLE
@@ -301,104 +482,58 @@ set_all_unloaded <- function() {
 #'  }
 #' }
 #' @export
-#' @rdname reset
-
-reset <- function() {
-  Modules <<- head(Modules,0)
-}
-
-
-
-
-.is_x <- function(module_file, checkState) {
-  module_name_result <- .get_module_name(module_file)
-  if (is.null(module_name_result[["err"]])){
-    module_name = module_name_result[["name"]]
-    .createIfNotFound(module_name, "LoadingState")
-    return(isTRUE(Modules$LoadingState[rownames(Modules)==module_name] == checkState))
-  } else {
-    return(module_name_result[["err"]])
-  }
-}
-
-is_loaded <- function(module_file) {
-  return(.is_x(module_file, checkState="loaded"))
-}
-
-
-is_loading <- function(module_file) {
-  return(.is_x(module_file, checkState="loading"))
-}
-
-is_not_loaded <- function(module_file) {
-  return(.is_x(module_file, checkState="not loaded"))
-}
-
-
-
+#' @rdname .contains
 
 .contains <- function(module_name) {
-  return(module_name %in% rownames(Modules))
-  # return ( is.element(module_name, Modules) )
-}
+
+  # ----- check Modules ----------------------------------------------
+
+  if ( ! exists("Modules", envir = .env) ) {
+    return("ERROR: unable to access internal data structure")
+  } # exists .env$Module
+
+  # ----- Main -------------------------------------------------------
+
+  return(module_name %in% rownames(.env$Modules))
+  # return ( is.element(module_name, .env$Modules) )
+
+} # .contains
 
 
-get_status <- function() {
-  return(Modules)
-}
+
+
+
+
+#' @title FUNCTION_TITLE
+#' @description FUNCTION_DESCRIPTION
+
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @export
+#' @rdname status
+
+status <- function() {
+
+  # ----- check Modules ----------------------------------------------
+
+  if ( ! exists("Modules", envir = .env) ) {
+    return("ERROR: unable to access internal data structure")
+  } # exists .env$Module
+
+  # ----- Main -------------------------------------------------------
+
+  return(.env$Modules)
+
+} # status
 
 
 
 
 
-# # TEST
-# #
-#
-# message(" 0. clean up")
-# Modules.reset()
-#
-# message(" 1. print")
-# print(Modules, row.names = TRUE)
-#
-# message(" 2. Modules.set_loaded('TEST1.R')")
-# print(Modules.set_loaded("TEST1.R"), row.names=TRUE)
-#
-# message(" 2a. Modules.is.loaded('TEST1.R')")
-# print(Modules.is.loaded("TEST1.R"), row.names=TRUE)
-#
-# message(" 2b. Modules.is.loading('TEST1.R')")
-# print(Modules.is.loading("TEST1.R"), row.names=TRUE)
-#
-# message(" 2c. Modules.is.loaded('TEST2.R')")
-# print(Modules.is.loaded("TEST2.R"), row.names=TRUE)
-#
-# message(" 2d. Modules.is.not.loaded('TEST2.R')")
-# print(Modules.is.not.loaded("TEST2.R"), row.names=TRUE)
-#
-# message(" 3. print")
-# print(Modules, row.names = TRUE)
-#
-# message(" 4. Modules.Load('TEST.R')")
-# print(Modules.Load("TEST.R"))
-#
-# message(" 5. print")
-# print(Modules, row.names = TRUE)
-#
-# message(" 6. Modules.Load('TEST1.R')")
-# print(Modules.Load("TEST1.R"))
-#
-# message(" 7. print")
-# print(Modules, row.names = TRUE)
-#
-# message(" 8. Modules.set_notloaded('TEST1.R')")
-# print(Modules.set_notloaded("TEST1.R"))
-#
-# message(" 9. print")
-# print(Modules, row.names = TRUE)
-#
-# message("10. Modules.Load('TEST1.R')")
-# print(Modules.Load("TEST1.R"))
-#
-# message("11. print")
-# print(Modules, row.names = TRUE)
-#
+

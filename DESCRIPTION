@@ -1,14 +1,17 @@
-Package: HamsteR
+Package: hamsteR
 Type: Package
-Title: Provides amodule loading features
+Title: Module loading features
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: Marc O. Ruedel <mor@uni-bremen.de>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: Marc O. Rüdel <mor@uni-bremen.de>
+Maintainer: Marc O. Rüdel <mor@uni-bremen.de>
+Description: The analysis of larger or more complex data sets usually takes place in many individual steps. Each of these steps uses input data, possibly producing intermediate products and finally end products. The end products then go back into subsequent steps. This is commonly called 'workflow'. 
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-Imports: stringr
+Imports: 
 Suggests: 
-    testthat (>= 2.1.0)
+    testthat (>= 2.1.0),
+    covr,
+    spelling
+RoxygenNote: 6.1.1
+Language: en-US

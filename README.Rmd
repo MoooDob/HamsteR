@@ -16,16 +16,19 @@ knitr::opts_chunk$set(
 # ModuleR
 
 <!-- badges: start -->
+[![Travis build status](https://travis-ci.org/MoooDob/hamsteR.svg?branch=master)](https://travis-ci.org/MoooDob/hamsteR)
+[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/MoooDob/hamsteR?branch=master&svg=true)](https://ci.appveyor.com/project/MoooDob/hamsteR)
+[![Codecov test coverage](https://codecov.io/gh/MoooDob/hamsteR/branch/master/graph/badge.svg)](https://codecov.io/gh/MoooDob/hamsteR?branch=master)
 <!-- badges: end -->
 
-The goal of HamsteR is to ...
+The goal of hamsteR is to ...
 
 ## Installation
 
 You can install the released version of ModuleR from [CRAN](https://CRAN.R-project.org) with:
 
 ``` r
-install.packages("HamsteR")
+install.packages("hamsteR")
 ```
 
 ## Example
@@ -33,7 +36,7 @@ install.packages("HamsteR")
 This is a basic example which shows you how to solve a common problem:
 
 ```{r example}
-library(HamsteR)
+library(hamsteR)
 ## basic example code
 ```
 
