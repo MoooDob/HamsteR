@@ -1,17 +1,27 @@
-Package: hamsteR
 Type: Package
-Title: Module loading features
+Package: hamsteR
+Title: Conditional source function
 Version: 0.1.0
 Author: Marc O. Rüdel <mor@uni-bremen.de>
 Maintainer: Marc O. Rüdel <mor@uni-bremen.de>
-Description: The analysis of larger or more complex data sets usually takes place in many individual steps. Each of these steps uses input data, possibly producing intermediate products and finally end products. The end products then go back into subsequent steps. This is commonly called 'workflow'. 
+Description: This package provides a conditional 'source'
+    function.  HamsteR can remembers which files have already been loaded
+    (and parsed) and can prevent reloading. You can specify which files
+    have been successfully loaded and which must be reloaded.
 License: MIT + file LICENSE
-Encoding: UTF-8
-LazyData: true
+Depends:
+    R (>= 3.5)
 Imports: 
+    base,
+    tools (>= 3.5),
+    utils (>= 3.5)
 Suggests: 
+    spelling (>= 2.1),
     testthat (>= 2.1.0),
-    covr,
-    spelling
-RoxygenNote: 6.1.1
+    covr (>= 3.3.2),
+    devtools (>= 2.2.1),
+    roxygen2 (>= 6.1.1)
+Encoding: UTF-8
 Language: en-US
+LazyData: true
+RoxygenNote: 6.1.1
