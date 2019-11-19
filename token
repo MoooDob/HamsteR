@@ -1,1 +1,0 @@
-usethis::use_github(protocol = "https", auth_token = "a8bed3701dc83e4cfae9ea092d4da6c51abc9e7e")

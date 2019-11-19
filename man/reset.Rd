@@ -2,23 +2,27 @@
 % Please edit documentation in R/hamsteR.R
 \name{reset}
 \alias{reset}
-\title{Clears all module states}
+\title{Clears all states}
 \usage{
 reset()
 }
-\value{
-OUTPUT_DESCRIPTION
-}
 \description{
-Clears all module states so that all modules are reloaded the next time they are used
-}
-\details{
-DETAILS
+Clears all states so that all files simply will be loaded and parsed the next time
 }
 \examples{
 \dontrun{
 if(interactive()){
- #EXAMPLE1
+ source_ifnotloaded("TEST.R")
+ set_loading_state("TEST.R", "loaded")
+ source_ifnotloaded("TEST.R") # not loaded again because the loading state of the file was changed to 'loaded'
+ is_managed("TEST.R") # TRUE
+ reset() # clear all loading states
+ is_managed("TEST.R") # FALSE
+ source_ifnotloaded("TEST.R") # loaded again
+ is_managed("TEST.R") # TRUE
  }
 }
+}
+\seealso{
+\code{\link{set_loading_state}} to set the loading state and \code{\link{loading_state_of}} to get the current loading state of a file
 }
