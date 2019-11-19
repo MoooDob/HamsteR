@@ -2,28 +2,38 @@
 % Please edit documentation in R/hamsteR.R
 \name{set_loading_state}
 \alias{set_loading_state}
-\title{FUNCTION_TITLE}
+\title{Set loading state of a file}
 \usage{
-set_loading_state(module_file, state)
+set_loading_state(file, state)
 }
 \arguments{
-\item{module_file}{PARAM_DESCRIPTION}
+\item{file}{file name of the script file to load}
 
-\item{state}{PARAM_DESCRIPTION}
-}
-\value{
-OUTPUT_DESCRIPTION
+\item{state}{desired state for the file}
 }
 \description{
-FUNCTION_DESCRIPTION
-}
-\details{
-DETAILS
+sets the loading state of the given file to the given state
 }
 \examples{
 \dontrun{
 if(interactive()){
- #EXAMPLE1
+
+ is_managed("Module_01.R") # FALSE
+
+ set_loading_state("Module_01.R", "undefined")
+ loading_state_of("Module_01.R") # == "undefinded"
+
+ set_loading_state("Module_01.R", "loading")
+ loading_state_of("Module_01.R") # == "loading"
+
+ set_loading_state("Module_01.R", "loaded")
+ loading_state_of("Module_01.R") # == "loaded"
+
+ set_loading_state("Module_01.R", "somethingelse") # --> ERROR
+
  }
 }
+}
+\seealso{
+\code{\link{loading_state_of}} for determining the current loading state of a file managed by \pkg{hamsteR}, \code{\link{source_ifnotloaded}} for conditional loading and parsing code
 }

@@ -2,23 +2,25 @@
 % Please edit documentation in R/hamsteR.R
 \name{status}
 \alias{status}
-\title{FUNCTION_TITLE}
+\title{Status of all managed files}
 \usage{
 status()
 }
 \value{
-OUTPUT_DESCRIPTION
+a data table, module names as row.names,
+loading state in column 'loading_state'
 }
 \description{
-FUNCTION_DESCRIPTION
-}
-\details{
-DETAILS
+returns a data.frame with the state of managed files
 }
 \examples{
 \dontrun{
 if(interactive()){
- #EXAMPLE1
- }
-}
+ set_loading_state("TEST_01.R", "loaded")
+ set_loading_state("TEST_02.R", "undefined")
+ status()
+ ##           loading_state
+ ## TEST_01.R loaded
+ ## TEST_02.R undefined
+}}
 }
