@@ -4,16 +4,16 @@
 \name{hamsteR}
 \alias{hamsteR}
 \alias{hamsteR-package}
-\title{hamsteR: A conditional \code{source} function}
+\title{hamsteR: conditional \code{source}}
 \description{
-The hamsteR package provides a conditional source function.
+The \pkg{hamsteR} package provides a conditional source function.
 }
 \details{
 foo, bar and baz.
 }
-\section{Foo functions}{
+\section{\pkg{hamsteR} functions}{
 
-The foo functions ...
+The \pkg{hamsteR} functions ...
 }
 
 \keyword{internal}

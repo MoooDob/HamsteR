@@ -1,11 +1,11 @@
-#' hamsteR: A conditional \code{source} function
+#' hamsteR: conditional \code{source}
 #'
-#' The hamsteR package provides a conditional source function.
+#' The \pkg{hamsteR} package provides a conditional source function.
 #'
 #' foo, bar and baz.
 #'
-#' @section Foo functions:
-#' The foo functions ...
+#' @section \pkg{hamsteR} functions:
+#' The \pkg{hamsteR} functions ...
 #'
 #' @docType package
 #' @name hamsteR

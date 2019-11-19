@@ -1,14 +1,14 @@
 Type: Package
 Package: hamsteR
-Title: Conditional source function
+Title: Conditional source
 Version: 0.1.0
 Author: Marc O. Rüdel <mor@uni-bremen.de>
 Maintainer: Marc O. Rüdel <mor@uni-bremen.de>
 Description: This package provides a conditional 'source'
-    function.  HamsteR can remembers which files have already been loaded
+    function. HamsteR can remember which files have already been loaded
     (and parsed) and can prevent reloading. You can specify which files
     have been successfully loaded and which must be reloaded.
-License: MIT + file LICENSE
+License: MIT
 Depends:
     R (>= 3.5)
 Imports: 
